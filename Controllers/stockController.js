@@ -27,9 +27,15 @@ exports.stockRegister = async (req,res)=>{
 // -----Displaying List of Stocks-----------------------------------------------------------
 exports.stockList = async (req,res)=>{
     console.log('Inside Displaying List of Medicines');
-    const {medicineName} = req.body
+    const {medicineName} = req.body;
+    const today = new Date();
     const query = medicineName ? { medicineName: { $regex: medicineName, $options: "i" } } : {};
     try{
+        // Convert today's date to string in the format "YYYY-MM-DD"
+        const todayStr = today.toISOString().split('T')[0];
+        // Delete expired medicines
+        await stocks.deleteMany({ expDate: { $lt: todayStr } });
+
         const allStocks = await stocks.find(query)
         res.status(200).json(allStocks)
     }catch(err){
