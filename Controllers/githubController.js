@@ -22,7 +22,7 @@ const path = require('path');
             const filePath = path.join(__dirname, '..', 'uploads', fileType + 's', file.filename);
             const fileContent = fs.readFileSync(filePath, { encoding: 'base64' });
             await uploadToGitHub(file.filename, fileContent, fileType);
-            fs.unlinkSync(filePath);    // Delete the file after upload
+            // fs.unlinkSync(filePath);    // Delete the file after upload
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
@@ -60,7 +60,7 @@ const path = require('path');
             const filePath = path.join(__dirname, '..', 'uploads', `${fileType}s`, uploadedFile);
             const fileContent = fs.readFileSync(filePath, { encoding: 'base64' });
             await uploadToGitHub(uploadedFile, fileContent, fileType);
-            fs.unlinkSync(filePath); // Delete the file after upload
+            // fs.unlinkSync(filePath); // Delete the file after upload
 
             console.log(`${fileType} edited in GitHub successfully: ${uploadedFile}`);
 
