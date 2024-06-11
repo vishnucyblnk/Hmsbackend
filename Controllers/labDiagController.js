@@ -1,5 +1,4 @@
 const labDiagReqs = require('../Models/labDiagRequestSchema');
-const patients = require('../Models/patientSchema');
 const githubController = require('../Controllers/githubController');
 
 exports.labDiagRequest = async(req,res)=>{
@@ -47,8 +46,8 @@ exports.labDiagAddingReport = async(req,res)=>{
     try{
         // updating with the report
         const updatelabDiagReport = await labDiagReqs.findByIdAndUpdate({_id:id},{lbDgReport: uploadedReport,status:1,relseRprtDate: releaseDate},{new:true})
-        // await updatelabDiagReport.save();
-        // res.status(200).json(updatelabDiagReport);
+        await updatelabDiagReport.save();
+        res.status(200).json(updatelabDiagReport);
         githubController.uploadImageAndPdf(req,res);
     }catch(err){
         res.status(401).json(`Error!!! Transaction failed: ${err}`);

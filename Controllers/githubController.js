@@ -18,12 +18,11 @@ const path = require('path');
         }
     
         try {
-            const fileType = req.file.fieldname === 'profImg' ? 'image' : 'pdf'; // Determine the file type
+            const fileType = req.file.fieldname === 'profImg' ? 'image' : 'pdf';  // Determine the file type
             const filePath = path.join(__dirname, '..', 'uploads', fileType + 's', file.filename);
-            console.log(filePath);
-            // const fileContent = fs.readFileSync(filePath, { encoding: 'base64' });
-            // await uploadToGitHub(file.filename, fileContent, 'image');
-            // fs.unlinkSync(filePath); // Delete the file after upload
+            const fileContent = fs.readFileSync(filePath, { encoding: 'base64' });
+            await uploadToGitHub(file.filename, fileContent, fileType);
+            fs.unlinkSync(filePath);    // Delete the file after upload
         } catch (error) {
             res.status(500).json({ error: error.message });
         }

@@ -1,6 +1,5 @@
-const calenderEvents = require('../Models/calenderEventSchema')
-const stickyNotes = require('../Models/stickyNotesSchema')
-const notifcations = require('../Models/notificationSchema');
+const calenderEvents = require('../Models/calenderEventSchema');
+const stickyNotes = require('../Models/stickyNotesSchema');
 const notifications = require('../Models/notificationSchema');
 
 
