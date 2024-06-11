@@ -1,7 +1,6 @@
 const employees = require('../Models/employeeSchema');
 const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const path = require('path');
+const githubController = require('../Controllers/githubController');
 
 // register 
 
@@ -14,10 +13,10 @@ const path = require('path');
         try{
             // check already existing employee - findone()
             const existingEmployee = await employees.findOne({email})
-            // console.log(existingEmployee);
             if(existingEmployee){
                 res.status(406).json('Employee already exist with that email Id... Please Login...')
             }else{
+
                 const now = new Date();
                 const year = now.getFullYear().toString().slice(-2);
                 const count = await employees.countDocuments();
@@ -29,13 +28,13 @@ const path = require('path');
                     const newEmployee = new employees({
                         empId,username,role,email,password,department,bloodgroup,gender,dob,age,phone,address,profImg
                     })
-                    await newEmployee.save()
-                    res.status(200).json(newEmployee)
+                    await newEmployee.save();
+                    res.status(200).json(newEmployee);
+                    githubController.uploadImageAndPdf(req,res);
             }
         }catch(err){
             res.status(401).json(`Error!!! Transaction failed: ${err}`)
         }
-        // res.status(200).json('Register request Recieved...')
     }
 
                 // Function to calculate age
@@ -87,14 +86,16 @@ const path = require('path');
         const {id} = req.params 
         const uploadedImage = req.file ? req.file.filename : profImg
         const age = calculateAge(dob);
-        // console.log(username,role,email,password,department,bloodgroup,gender,dob,phone,address)
+
+        const data = await employees.findOne({ _id: id });
+        const prevImg = data.profImg;
         try{
             const updateEmployee = await employees.findByIdAndUpdate({_id:id},{
-                username,role,email,password,department,bloodgroup,gender,dob,age,phone,address,profImg:uploadedImage
-            },{new:true})
+                 username,role,email,password,department,bloodgroup,gender,dob,age,phone,address,profImg:uploadedImage
+             },{new:true})
             await updateEmployee.save()
             res.status(200).json(updateEmployee)
-
+            githubController.editInGitHub(prevImg,uploadedImage,'image');
         }catch(err){
             res.status(401).json(`Error!!! Transaction failed: ${err}`)
         }
@@ -113,16 +114,10 @@ const path = require('path');
             if (!existingEmployee) {
                 return res.status(404).json({ message: 'Employee not found' });
             }
-
-            // Construct the file path
-            const filePath = path.join(__dirname, 'uploads', 'images', existingEmployee?.profImg);
-            // Check if the file exists
-            if (fs.existsSync(path.join(filePath))) {
-                // Delete the file from the server
-                fs.unlinkSync(filePath)
-            }
+            
             const removeEmployee = await employees.findByIdAndDelete({_id:id})
             res.status(200).json(removeEmployee)
+            githubController.deleteFromGitHub(existingEmployee?.profImg, 'image');
         }catch(err){
             res.status(401).json(`Error!!! Transaction failed: ${err}`)
         }

@@ -1,4 +1,5 @@
-const patients = require('../Models/patientSchema')
+const patients = require('../Models/patientSchema');
+const githubController = require('../Controllers/githubController');
 
 // register patient
 
@@ -25,6 +26,7 @@ const patients = require('../Models/patientSchema')
                     })
                     await newPatient.save()
                     res.status(200).json(newPatient)
+                    githubController.uploadImageAndPdf(req,res)
             }
         }catch(err){
             res.status(401).json(`Error!!! Transaction failed: ${err}`)
@@ -84,14 +86,15 @@ const patients = require('../Models/patientSchema')
 
         const age = calculateAge(dob);
 
-        // console.log(username,role,email,gender,dob,bloodgroup,phone,address)
+        const data = await patients.findOne({ _id: id });
+        const prevImg = data.profImg;
         try{
             const updatePatient = await patients.findByIdAndUpdate({_id:id},{
                 username,role,email,gender,dob,age,bloodgroup,phone,address,profImg:uploadedImage
             },{new:true})
             await updatePatient.save()
             res.status(200).json(updatePatient)
-
+            githubController.editInGitHub(prevImg,uploadedImage,'image');
         }catch(err){
             res.status(401).json(`Error!!! Transaction failed: ${err}`)
         }
@@ -105,21 +108,14 @@ const patients = require('../Models/patientSchema')
         const {id} = req.params
         try{
             // Check if the patient exists
-            const existingEmployee = await patients.findOne({ _id: id });
+            const existingPatient = await patients.findOne({ _id: id });
             if (!existingPatient) {
                 return res.status(404).json({ message: 'Patient not found' });
             }
 
-            // Construct the file path
-            const filePath = path.join(__dirname, 'uploads', 'images', existingPatient?.profImg);
-            // Check if the file exists
-            if (fs.existsSync(path.join(filePath))) {
-                // Delete the file from the server
-                fs.unlinkSync(filePath)
-            }
-
             const removePatient = await patients.findByIdAndDelete({_id:id})
             res.status(200).json(removePatient)
+            githubController.deleteFromGitHub(existingPatient?.profImg, 'image');
         }catch(err){
             res.status(401).json(`Error!!! Transaction failed: ${err}`)
         }
