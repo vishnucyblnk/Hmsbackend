@@ -38,7 +38,7 @@ const path = require('path');
         // res.status(200).json('Register request Recieved...')
     }
 
-                    // Function to calculate age
+                // Function to calculate age
                     function calculateAge(birthDate) {
                         const today = new Date();
                         const dob = new Date(birthDate);

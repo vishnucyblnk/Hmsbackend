@@ -1,6 +1,8 @@
 // imported express
 const express = require('express');
 
+require('dotenv').config()
+
 const multerConfig = require('../Middlewares/multerMiddleware');
 const jwtMiddleware = require('../Middlewares/jwtMiddleware');
 
@@ -14,8 +16,40 @@ const labDiagController =  require('../Controllers/labDiagController');
 const dashBoardController = require('../Controllers/dashBoardController');
 const stockController = require('../Controllers/stockController');
 
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+
 // created router for express app using Router object
 const router = new express.Router()
+
+
+
+// GitHub Repository details
+const GITHUB_REPO = "vishnucyblnk/Hmsbackend";
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // GitHub Token stored in environment variable
+
+// Function to upload file to GitHub
+const uploadToGitHub = async (fileName, content, fileType) => {
+    try {
+        console.log(`Uploading ${fileType} to GitHub: ${fileName}`);
+        const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/uploads/${fileType}s/${fileName}`;
+        const data = {
+            message: `Add ${fileName}`,
+            content: content
+        };
+        const headers = {
+            "Authorization": `token ${GITHUB_TOKEN}`,
+            "Accept": "application/vnd.github.v3+json"
+        };
+
+        await axios.put(url, data, { headers });
+        console.log(`${fileType} uploaded to GitHub successfully: ${fileName}`);
+    } catch (error) {
+        throw new Error(`Failed to upload ${fileType} to GitHub: ${error.message}`);
+    }
+};
+
 
 // define different routes for server app
 
@@ -23,7 +57,31 @@ const router = new express.Router()
 // -----ADMIN RELATED-----------------------------------------------------------------
 
     // employeeregister
-        router.post('/employee/register',jwtMiddleware,multerConfig('image').single('profImg'),employeeController.register)
+    router.post('/employee/register',jwtMiddleware,multerConfig('image').single('profImg'), async (req, res) => {
+    console.log("entered");
+    const file = req.file;
+    console.log(file);
+
+    if (!file) {
+        return res.status(400).json({ error: "No file uploaded or unsupported file type" });
+    }
+
+    try {
+        const file = req.file;
+        if (!file) {
+            return res.status(400).json({ error: "No file uploaded or unsupported file type" });
+        }
+        const fileType = req.file.fieldname === 'profImg' ? 'image' : 'pdf'; // Determine the file type
+        const filePath = path.join(__dirname, '..', 'uploads', fileType + 's', file.filename);
+        console.log("filePath",filePath);
+        const fileContent = fs.readFileSync(filePath, { encoding: 'base64' });
+        await uploadToGitHub(file.filename, fileContent, 'image');
+        fs.unlinkSync(filePath); // Delete the file after upload
+        employeeController.register(req,res);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
     // adminlogin
         router.post('/employee/login',employeeController.login)
     // admin member List
