@@ -1,4 +1,5 @@
 const patients = require('../Models/patientSchema');
+const employees = require('../Models/employeeSchema');
 const githubController = require('../Controllers/githubController');
 const validator = require('validator');
 
@@ -7,26 +8,29 @@ const validator = require('validator');
     exports.register = async (req,res)=>{
         console.log("Inside Patient register function");
         const {username,role,email,gender,dob,bloodgroup,phone,address} = req.body
-        const profImg = req.file
-        
-        // Validate email using validator library
-        if (!validator.isEmail(email)) {
-            return res.status(400).json('Invalid email format');
-        }
-
+        const profImg = req.file.filename
 
         try{
+            // check already existing - findone() || email is in correct format
+            const existingEmployee = await employees.findOne({email})
             const existingPatient = await patients.findOne({email})
-            if(existingPatient){
-                res.status(406).json("Patient Already Exists......")
-            }else{
+            if(existingEmployee){
+                res.status(406).json('An Employee Already exist with that email Id')
+            }
+            else if (existingPatient){
+                res.status(406).json('This Email Already Registered by Someone')
+            }
+            else if (!validator.isEmail(email)) {
+                res.status(400).json('Invalid email format');
+            }
+            else{
                 // registering patient
                 const now = new Date();
                 const year = now.getFullYear().toString().slice(-2);
-                const age = calculateAge(dob);
-
                 const count = await patients.countDocuments();
                 const patId = `CLV${year}${role}${(parseInt(count) + 1).toString().padStart(4, '0')}`;
+
+                const age = calculateAge(dob);
 
                 // register patient
                     const newPatient = new patients({
@@ -40,7 +44,6 @@ const validator = require('validator');
             res.status(401).json(`Error!!! Transaction failed: ${err}`)
         }
     }
-
                     // Function to calculate age
                         function calculateAge(birthDate) {
                             const today = new Date();
@@ -88,12 +91,6 @@ const validator = require('validator');
     exports.editPatient = async(req,res)=>{
         console.log('Inside editing a Patient details')
 
-        // Validate email using validator library
-        if (!validator.isEmail(email)) {
-            return res.status(400).json('Invalid email format');
-        }
-
-
         const userId = req.payload
         const {username,role,email,gender,dob,bloodgroup,phone,address,profImg} = req.body
         const {id} = req.params 
@@ -101,14 +98,38 @@ const validator = require('validator');
 
         const age = calculateAge(dob);
 
-        const data = await patients.findOne({ _id: id });
-        const prevImg = data.profImg;
         try{
+            const existingPatient = await patients.findOne({ _id: id });
+            if (!existingPatient) {
+                return res.status(404).json('Patient not found');
+            }
+            const prevImg = existingPatient.profImg;
+
+            // Validate email using validator library
+            if (!validator.isEmail(email)) {
+                return res.status(400).json('Invalid email format');
+            }
+
+            const employeeWithEmail = await employees.find({ email });
+            const patientWithEmail = await patients.find({ email });
+
+            if (patientWithEmail.length > 0 && patientWithEmail[0]._id.toString() !== id) {
+                return res.status(400).json('This Email is Already Registered by Someone');
+            }else if(employeeWithEmail.length > 0 && employeeWithEmail[0]._id.toString() !== id){
+                return res.status(400).json('An Employee Already exist with that email Id');
+            }
+
             const updatePatient = await patients.findByIdAndUpdate({_id:id},{
                 username,role,email,gender,dob,age,bloodgroup,phone,address,profImg:uploadedImage
             },{new:true})
+
+            if (!updatePatient) {
+                return res.status(500).json('Error updating patient details');
+            }
+
             await updatePatient.save()
             res.status(200).json(updatePatient)
+
             githubController.editInGitHub(prevImg,uploadedImage,'image');
         }catch(err){
             res.status(401).json(`Error!!! Transaction failed: ${err}`)

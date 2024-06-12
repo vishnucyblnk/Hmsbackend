@@ -1,4 +1,5 @@
 const employees = require('../Models/employeeSchema');
+const patients = require('../Models/patientSchema');
 const jwt = require('jsonwebtoken');
 const githubController = require('../Controllers/githubController');
 const validator = require('validator');
@@ -9,20 +10,21 @@ const validator = require('validator');
         console.log('Inside employee register function');
         const {username,role,email,password,department,bloodgroup,gender,dob,phone,address} = req.body
         const profImg = req.file.filename
-        
-        // Validate email using validator library
-        if (!validator.isEmail(email)) {
-            return res.status(400).json('Invalid email format');
-        }
 
-        // console.log(`Username: ${username},role: ${role}, Email : ${email}, password : ${password}, department : ${department}, bloodgroup : ${bloodgroup}, gender : ${gender}, dob : ${dob}, phone : ${phone}, address : ${address}, profImg : ${profImg}`);
         try{
-            // check already existing employee - findone()
+            // check already existing - findone() || email is in correct format
             const existingEmployee = await employees.findOne({email})
+            const existingPatient = await patients.findOne({email})
             if(existingEmployee){
-                res.status(406).json('Employee already exist with that email Id... Please Login...')
-            }else{
-
+                res.status(406).json('An Employee Already exist with that email Id')
+            }
+            else if (existingPatient){
+                res.status(406).json('This Email Already Registered by Someone')
+            }
+            else if (!validator.isEmail(email)) {
+                res.status(400).json('Invalid email format');
+            }
+            else{
                 const now = new Date();
                 const year = now.getFullYear().toString().slice(-2);
                 const count = await employees.countDocuments();
@@ -86,27 +88,46 @@ const validator = require('validator');
 
 // edit Employee
     exports.editEmployee = async(req,res)=>{
-        console.log('Inside editing Employee Details')
-
-        // Validate email using validator library
-        if (!validator.isEmail(email)) {
-            return res.status(400).json('Invalid email format');
-        }
-        
+        console.log('Inside editing Employee Details');
         const userId = req.payload
         const {username,role,email,password,department,bloodgroup,gender,dob,phone,address,profImg} = req.body
         const {id} = req.params 
         const uploadedImage = req.file ? req.file.filename : profImg
+
         const age = calculateAge(dob);
 
-        const data = await employees.findOne({ _id: id });
-        const prevImg = data.profImg;
         try{
+            const existingEmployee = await employees.findOne({ _id: id });
+            if (!existingEmployee) {
+                return res.status(404).json('Employee not found');
+            }
+            const prevImg = existingEmployee.profImg;
+
+            // Validate email using validator library
+                if (!validator.isEmail(email)) {
+                    return res.status(400).json('Invalid email format');
+                }
+
+            // email existence check
+                const employeeWithEmail = await employees.find({ email });
+                const patientWithEmail = await patients.find({ email });
+                if (employeeWithEmail.length > 0 && employeeWithEmail[0]._id.toString() !== id){
+                    return res.status(400).json('An Employee Already exist with that email Id');
+                }else if (patientWithEmail.length > 0 && patientWithEmail[0]._id.toString() !== id){
+                    return res.status(400).json('This Email Already Registered by Someone');
+                }
+
             const updateEmployee = await employees.findByIdAndUpdate({_id:id},{
-                 username,role,email,password,department,bloodgroup,gender,dob,age,phone,address,profImg:uploadedImage
-             },{new:true})
+                username,role,email,password,department,bloodgroup,gender,dob,age,phone,address,profImg:uploadedImage
+            },{new:true})
+
+            if (!updateEmployee) {
+                return res.status(500).json('Error updating employee details');
+            }
+
             await updateEmployee.save()
             res.status(200).json(updateEmployee)
+
             githubController.editInGitHub(prevImg,uploadedImage,'image');
         }catch(err){
             res.status(401).json(`Error!!! Transaction failed: ${err}`)
