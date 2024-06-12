@@ -1,6 +1,7 @@
 const employees = require('../Models/employeeSchema');
 const jwt = require('jsonwebtoken');
 const githubController = require('../Controllers/githubController');
+const validator = require('validator');
 
 // register 
 
@@ -9,6 +10,11 @@ const githubController = require('../Controllers/githubController');
         const {username,role,email,password,department,bloodgroup,gender,dob,phone,address} = req.body
         const profImg = req.file.filename
         
+        // Validate email using validator library
+        if (!validator.isEmail(email)) {
+            return res.status(400).json('Invalid email format');
+        }
+
         // console.log(`Username: ${username},role: ${role}, Email : ${email}, password : ${password}, department : ${department}, bloodgroup : ${bloodgroup}, gender : ${gender}, dob : ${dob}, phone : ${phone}, address : ${address}, profImg : ${profImg}`);
         try{
             // check already existing employee - findone()
@@ -81,6 +87,12 @@ const githubController = require('../Controllers/githubController');
 // edit Employee
     exports.editEmployee = async(req,res)=>{
         console.log('Inside editing Employee Details')
+
+        // Validate email using validator library
+        if (!validator.isEmail(email)) {
+            return res.status(400).json('Invalid email format');
+        }
+        
         const userId = req.payload
         const {username,role,email,password,department,bloodgroup,gender,dob,phone,address,profImg} = req.body
         const {id} = req.params 

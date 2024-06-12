@@ -1,12 +1,20 @@
 const patients = require('../Models/patientSchema');
 const githubController = require('../Controllers/githubController');
+const validator = require('validator');
 
 // register patient
 
     exports.register = async (req,res)=>{
         console.log("Inside Patient register function");
         const {username,role,email,gender,dob,bloodgroup,phone,address} = req.body
-        const profImg = req.file.filename
+        const profImg = req.file.
+        
+        // Validate email using validator library
+        if (!validator.isEmail(email)) {
+            return res.status(400).json('Invalid email format');
+        }
+
+
         try{
             const existingPatient = await patients.findOne({email})
             if(existingPatient){
@@ -79,6 +87,13 @@ const githubController = require('../Controllers/githubController');
 // edit Patient
     exports.editPatient = async(req,res)=>{
         console.log('Inside editing a Patient details')
+
+        // Validate email using validator library
+        if (!validator.isEmail(email)) {
+            return res.status(400).json('Invalid email format');
+        }
+
+
         const userId = req.payload
         const {username,role,email,gender,dob,bloodgroup,phone,address,profImg} = req.body
         const {id} = req.params 
