@@ -7,7 +7,7 @@ const validator = require('validator');
     exports.register = async (req,res)=>{
         console.log("Inside Patient register function");
         const {username,role,email,gender,dob,bloodgroup,phone,address} = req.body
-        const profImg = req.file.
+        const profImg = req.file
         
         // Validate email using validator library
         if (!validator.isEmail(email)) {
