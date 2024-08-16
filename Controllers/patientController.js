@@ -33,7 +33,7 @@ const validator = require('validator');
 
                 if (lastPatient) {
                     const lastId = lastPatient.patId;
-                    const lastIdNumber = parseInt(lastId.slice(6)); // Extract the numeric part of the last ID
+                    const lastIdNumber = parseInt(lastId.slice(8)); // Extract the numeric part of the last ID
                     newIdNumber = lastIdNumber + 1;
                 }
 
