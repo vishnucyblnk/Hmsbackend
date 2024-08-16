@@ -27,8 +27,18 @@ const validator = require('validator');
             else{
                 const now = new Date();
                 const year = now.getFullYear().toString().slice(-2);
-                const count = await employees.countDocuments();
-                const empId = `CLV${year}${role}${(parseInt(count) + 1).toString().padStart(4, '0')}`;
+
+                let newIdNumber = 1;
+                const lastEmployee = await employees.findOne().sort({ empId: -1 });
+
+                if (lastEmployee) {
+                    const lastId = lastEmployee.patId;
+                    const lastIdNumber = parseInt(lastId.slice(8)); // Extract the numeric part of the last ID
+                    newIdNumber = lastIdNumber + 1;
+                }
+
+                
+                const empId = `CLV${year}${role}${(parseInt(newIdNumber)).toString().padStart(4, '0')}`;
 
                 const age = calculateAge(dob);
 
