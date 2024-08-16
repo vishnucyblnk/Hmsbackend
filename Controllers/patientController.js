@@ -27,8 +27,17 @@ const validator = require('validator');
                 // registering patient
                 const now = new Date();
                 const year = now.getFullYear().toString().slice(-2);
-                const count = await patients.countDocuments();
-                const patId = `CLV${year}${role}${(parseInt(count) + 1).toString().padStart(4, '0')}`;
+
+                let newIdNumber = 1;
+                const lastPatient = await patients.findOne().sort({ patId: -1 });
+
+                if (lastPatient) {
+                    const lastId = lastPatient.patId;
+                    const lastIdNumber = parseInt(lastId.slice(6)); // Extract the numeric part of the last ID
+                    newIdNumber = lastIdNumber + 1;
+                }
+
+                const patId = `CLV${year}${role}${newIdNumber.toString().padStart(4, '0')}`;
 
                 const age = calculateAge(dob);
 
