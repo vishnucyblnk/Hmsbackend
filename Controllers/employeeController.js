@@ -32,7 +32,7 @@ const validator = require('validator');
                 const lastEmployee = await employees.findOne().sort({ empId: -1 });
 
                 if (lastEmployee) {
-                    const lastId = lastEmployee.patId;
+                    const lastId = lastEmployee.empId;
                     const lastIdNumber = parseInt(lastId.slice(8)); // Extract the numeric part of the last ID
                     newIdNumber = lastIdNumber + 1;
                 }
