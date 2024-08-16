@@ -37,7 +37,8 @@ const validator = require('validator');
                     newIdNumber = lastIdNumber + 1;
                 }
 
-                const patId = `CLV${year}${role}${newIdNumber.toString().padStart(4, '0')}`;
+                
+                const patId = `CLV${year}${role}${(parseInt(newIdNumber)).toString().padStart(4, '0')}`;
 
                 const age = calculateAge(dob);
 
