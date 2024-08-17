@@ -29,7 +29,8 @@ const validator = require('validator');
                 const year = now.getFullYear().toString().slice(-2);
 
                 let newIdNumber = 1;
-                const lastEmployee = await employees.findOne().sort({ empId: -1 });
+                const lastEmployee = await employees.findOne().sort({ _id: -1 });
+                
 
                 if (lastEmployee) {
                     const lastId = lastEmployee.empId;
@@ -39,6 +40,7 @@ const validator = require('validator');
 
                 
                 const empId = `CLV${year}${role}${(parseInt(newIdNumber)).toString().padStart(4, '0')}`;
+                
 
                 const age = calculateAge(dob);
 
